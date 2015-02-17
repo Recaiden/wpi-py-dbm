@@ -21,8 +21,12 @@ class store(object):
     def __init__(self, filenDB="./wpi.db"):
         '''Opens the database file, creating it if it doesn't exist, and initializes and 
         options and settings for this session, should those exist later'''
+        self.db = {}
         self.dbopen(filenDB)
-        
+        try:
+            with open(self.filenDB, 'r+b') as handle:
+                self.db = pickle.load(handle)
+        except EOFError: print "no db yet."
         
     def dbopen(self, filenDB):
         ''''''
@@ -30,7 +34,8 @@ class store(object):
         if os.path.exists(filenDB):
             pass # open DB
         else:
-            pass # create DB
+            f = open(self.filenDB, "w")
+            f.close()
         return True
 
     def put(self, key, data):
@@ -45,9 +50,11 @@ class store(object):
         '''retrieves the data.'''
 
         #TODO check that not in use?
-        with open(self.filenDB, 'rb') as handle:
-            self.db = pickle.load(handle)
-        return self.db[key]
+        try:
+            with open(self.filenDB, 'rb') as handle:
+                self.db = pickle.load(handle)
+            return self.db[key]
+        except KeyError: return "ERROR: key not found"
 
     def remove(self, key):
         '''deletes the key.'''
@@ -57,14 +64,14 @@ class store(object):
             pickle.dump(self.db, handle)
         
         if present == None:
-            return "Key not found"
+            return "ERROR: key not found"
         else:
             return True
         
     
 def Put(key, data):
     '''stores data under the given key.'''
-    return db.put(kay, data)
+    return db.put(key, data)
 def Get(key):
     '''retrieves the data.'''
     return db.get(key)
@@ -78,10 +85,10 @@ if __name__ == "__main__":
     db = store()
     # print the options
     for opt, explanation in zip(OPTIONS, EXP_OPTIONS):
-        print "%s - %s\n" %(opt, explanation)
+        print "%s - %s" %(opt, explanation)
     while True:
         # read an option form the commandline
-        lnInput = raw_input()
+        lnInput = raw_input("--: ")
         choice = lnInput.split(" ")[0]
         args = lnInput.split(" ")[1:]
 
@@ -90,7 +97,7 @@ if __name__ == "__main__":
             Put(args[0], args[1])
         # get
         elif choice == 'g':
-            Get(args[0])
+            print Get(args[0])
         # remove
         elif choice == 'r':
             Remove(args[0])
