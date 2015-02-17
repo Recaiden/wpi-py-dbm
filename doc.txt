@@ -1,0 +1,21 @@
+McIntyre Watts
+CS542
+Spring 2015
+
+Programming Option, Part 1
+
+A values store (a simplified version of a key-value store). The value
+store has just three interfaces:
+      Put(key, data): stores data under the given key.
+      Get(key): retrieves the data.
+      Remove(key): deletes the key.
+
+The program is written in python, version 2.7.8
+
+    void Put(int key, byte[] data); stores data under the given key,
+    byte[] Get(int key); retrieves the data and
+    void Remove(int key); deletes the key.
+
+The value byte array can be arbitrarily large, up to 1 GB.
+
+Your solution will be evaluated on the correctness of the code, keeping in mind some tricky tests: what happens when one caller in one thread is retrieving data while another caller in another thread does a Put() and replaces the data. Or when one caller does a Remove() and another caller does a Get() a millisecond later. 
