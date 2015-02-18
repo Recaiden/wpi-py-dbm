@@ -3,8 +3,10 @@
 import os       # file operations
 import pickle   # serializing data structures
 #import shelf    # automated persistence of dictionary-like structures
+import fcntl    # exclusion of simultaneous edits.
 
 FILEN_EXT__LOCK = ".lock"
+LOCK_WRITE = "lock"
 
 db = None
 
@@ -40,28 +42,66 @@ class store(object):
 
     def put(self, key, data):
         '''stores data under the given key.'''
+
+        # acquire lock and open files
+        handle = open(self.filenDB, 'w+b')
+        fcntl.lockf(handle, fcntl.LOCK_EX)
+        marker = open(".%s"%key, 'w+b')
+        fcntl.lockf(marker, fcntl.LOCK_EX)
+
+        # Update store from file, set new data, rewrite store to file
+        self.db = pickle.load(handle)
         self.db[key] = data
-        #TODO check that not in use?
-        with open(self.filenDB, 'wb') as handle:
-            pickle.dump(self.db, handle)
+        pickle.dump(self.db, handle)
+
+        # release lock and clean up
+        fcntl.lockf(marker, fcntl.LOCK_UN)
+        fcntl.lockf(handle, fcntl.LOCK_UN)
+        marker.close()
+        handle.close()
+
         return True
 
     def get(self, key):
         '''retrieves the data.'''
 
-        #TODO check that not in use?
+        # acquire lock and open files
+        marker = open(".%s"%key, 'w+b')
+        fcntl.lockf(marker, fcntl.LOCK_SH)
+
+        handle = open(self.filenDB, 'rb')
+        self.db = pickle.load(handle)
+        handle.close()
+        fcntl.lockf(marker, fcntl.LOCK_UN)
+        marker.close()
+
+        retval = None
         try:
-            with open(self.filenDB, 'rb') as handle:
-                self.db = pickle.load(handle)
-            return self.db[key]
-        except KeyError: return "ERROR: key not found"
+            retval = self.db[key]
+        except KeyError:
+            retval = "ERROR: key not found"
+        return retval
+        
 
     def remove(self, key):
         '''deletes the key.'''
 
+        # acquire lock and open files
+        handle = open(self.filenDB, 'w+b')
+        fcntl.lockf(handle, fcntl.LOCK_EX)
+        marker = open(".%s"%key, 'w+b')
+        fcntl.lockf(marker, fcntl.LOCK_EX)
+
+        # Update store from file, set new data, rewrite store to file
+        self.db = pickle.load(handle)
         present = self.db.pop(key, None)
-        with open(self.filenDB, 'wb') as handle:
-            pickle.dump(self.db, handle)
+        pickle.dump(self.db, handle)
+
+        # release lock and clean up
+        fcntl.lockf(marker, fcntl.LOCK_UN)
+        fcntl.lockf(handle, fcntl.LOCK_UN)
+        marker.close()
+        handle.close()
         
         if present == None:
             return "ERROR: key not found"

@@ -4,18 +4,41 @@ Spring 2015
 
 Programming Option, Part 1
 
-A values store (a simplified version of a key-value store). The value
-store has just three interfaces:
+A values store (a simplified version of a key-value store). The value store has just three interfaces:
       Put(key, data): stores data under the given key.
       Get(key): retrieves the data.
       Remove(key): deletes the key.
 
-The program is written in python, version 2.7.8
-
-    void Put(int key, byte[] data); stores data under the given key,
-    byte[] Get(int key); retrieves the data and
-    void Remove(int key); deletes the key.
-
 The value byte array can be arbitrarily large, up to 1 GB.
+
+The program opens a default database when run; all invocations from
+the same executable default to the same databadse, though they could
+theoretically be attached to a different database.  Internally, the
+value-store is represented by a python dctionary (a map type) which is
+serialized to a file for persistent and cross-invocation existence.
+
+The program opens an interactive prompt where a user can
+put/get/remove using a space-separated command syntax.
+
+Concurrency/interactions
+The following interactions should be prevented:
+1. Simulataneous puts/removes could leave the value store in a state
+where the change made by one operation is simply lost.  Thus, write
+operations to the store need to be strictly ordered/atomic.  This
+should be enforced by the python file handling routines; only 1 thread
+can acquire write priveleges at a time.
+However, the code also needs to check the store so it does not
+overwrite changes.  Once a change is ready to be made:
+-A write lock is acquired.
+-The store is read.
+-The local copy is updated.
+-The store is written back.
+-The lock is released.
+2. A get simultaneous/shortly interleaved with a put/remove.  It is
+possible that the data returned by a get is out-of-date very quickly
+based on changes to the store.
+File Locks are handled through hidden empty files usnig the file
+control system in order to have a persistent record across separate
+concurrent invocations.
 
 Your solution will be evaluated on the correctness of the code, keeping in mind some tricky tests: what happens when one caller in one thread is retrieving data while another caller in another thread does a Put() and replaces the data. Or when one caller does a Remove() and another caller does a Get() a millisecond later. 
