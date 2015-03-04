@@ -2,7 +2,7 @@ McIntyre Watts
 CS542
 Spring 2015
 
-Programming Option, Part 1
+Programming Option, Part 1 and 2
 
 A values store (a simplified version of a key-value store). The value store has just three interfaces:
       Put(key, data): stores data under the given key.
@@ -10,6 +10,10 @@ A values store (a simplified version of a key-value store). The value store has 
       Remove(key): deletes the key.
 
 The value byte array can be arbitrarily large, up to 1 GB.
+In addition, there is an indexing mechanism used to organize data, a
+B+ tree.  This is done using a tree class and two node classes.  One
+node class is for interior nodes, another for leaf nodes which
+actually store data.
 
 The program opens a default database when run; all invocations from
 the same executable default to the same databadse, though they could
@@ -22,6 +26,7 @@ put/get/remove using a space-separated command syntax.
 
 Concurrency/interactions
 The following interactions should be prevented:
+
 1. Simulataneous puts/removes could leave the value store in a state
 where the change made by one operation is simply lost.  Thus, write
 operations to the store need to be strictly ordered/atomic.  This
@@ -29,16 +34,24 @@ should be enforced by the python file handling routines; only 1 thread
 can acquire write priveleges at a time.
 However, the code also needs to check the store so it does not
 overwrite changes.  Once a change is ready to be made:
--A write lock is acquired.
 -The store is read.
 -The local copy is updated.
 -The store is written back.
--The lock is released.
+
 2. A get simultaneous/shortly interleaved with a put/remove.  It is
 possible that the data returned by a get is out-of-date very quickly
 based on changes to the store.
-File Locks are handled through hidden empty files usnig the file
+File Locks are handled through a directory of empty files using the file
 control system in order to have a persistent record across separate
-concurrent invocations.
+concurrent invocations.  Files for deleted keys remain, but will not
+be accessed.
 
-Your solution will be evaluated on the correctness of the code, keeping in mind some tricky tests: what happens when one caller in one thread is retrieving data while another caller in another thread does a Put() and replaces the data. Or when one caller does a Remove() and another caller does a Get() a millisecond later. 
+For part 2, a b+tree is used instead of a simple dictionary store.  It
+still reads/writes at the same places in order to prevent unwanted
+interaction, which has a heavy performance penalty, especially for
+larger databases.
+In order to prevent concurrent actions, most of the benefits of the
+indexing system are given up, as it is not read just in part, many
+disk accesses are necessary.  However, if these interactions were
+prevented in some other manner the index mechanism would be easily converted.
+
