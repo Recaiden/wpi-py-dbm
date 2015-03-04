@@ -20,7 +20,7 @@ EXP_OPTIONS = ('Put: p key value',
     
 def Put(key, data):
     '''stores data under the given key.'''
-    return db.put(key, data)
+    return db.insert(key, data)
 def Get(key):
     '''retrieves the data.'''
     return db.get(key)
@@ -28,10 +28,9 @@ def Remove(key):
     '''deletes the key.'''
     return db.remove(key)
 
-
 # Running the value store
 if __name__ == "__main__":
-    db = store()
+    db = bptree()
     # print the options
     for opt, explanation in zip(OPTIONS, EXP_OPTIONS):
         print "%s - %s" %(opt, explanation)

@@ -301,7 +301,7 @@ class bpleaf(bpnode):
 # Tree
 #==========================================================================#
 class bptree(object):
-    def __init__(self, fanout):
+    def __init__(self, fanout=50):
         self.fanout = fanout
         self._root = self._bottom = bpleaf(self)
 
