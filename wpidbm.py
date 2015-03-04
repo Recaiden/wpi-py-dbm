@@ -2,13 +2,13 @@
 
 import os       # file operations
 import pickle   # serializing data structures
-#import shelf    # automated persistence of dictionary-like structures
 import fcntl    # exclusion of simultaneous edits.
 
-from store import *
-from btree import *
+from store import * # part 1
+from btree import * # part 2
 
 db = None
+filenDB="./wpi.db"
 
 OPTIONS = ('p', 'g', 'r', 'pf', 'gf', 'q')
 EXP_OPTIONS = ('Put: p key value',
@@ -16,21 +16,73 @@ EXP_OPTIONS = ('Put: p key value',
                'Remove: r key',
                'Put from file: pf key file',
                'Get to file: gf key file',
-               'Quit')        
-    
+               'Quit')
+
+# These 3 operations hold the file-access/refreshing and attach to the actual data-store.
 def Put(key, data):
     '''stores data under the given key.'''
-    return db.insert(key, data)
+    # acquire lock and open files
+    marker = open(".%s"%key, 'w+b')
+    handle = open(filenDB, 'rb')
+    
+    global db
+    db = pickle.load(handle)
+    handle.close()
+    handle = open(filenDB, 'w+b')
+    
+    val = db.insert(key, data)
+    pickle.dump(db, handle)
+
+    # release lock and clean up
+    marker.close()
+    handle.close()
+    
+    return val
+
 def Get(key):
     '''retrieves the data.'''
-    return db.get(key)
+    # acquire lock and open files
+    marker = open(".%s"%key, 'w+b')
+    handle = open(filenDB, 'rb')
+    db = pickle.load(handle)
+    
+    val =  db.get(key)
+
+    handle.close()
+    marker.close()
+
+    return val
+
 def Remove(key):
     '''deletes the key.'''
-    return db.remove(key)
+    # acquire lock and open files
+    marker = open(".%s"%key, 'w+b')
+    handle = open(filenDB, 'rb')
+
+    # Update store from file, set new data, rewrite store to file
+    global db
+    db = pickle.load(handle)
+    handle.close()
+    handle = open(filenDB, 'w+b')
+    
+    present = db.remove(key)
+    pickle.dump(db, handle)
+    
+    # release lock and clean up
+    marker.close()
+    handle.close()
 
 # Running the value store
 if __name__ == "__main__":
     db = bptree()
+    if os.path.exists(filenDB):
+        pass # open DB
+    else:
+        print "creating default file"
+        f = open(filenDB, "w+b")
+        #print pickle.dumps(db)
+        pickle.dump(db, f)
+        f.close()
     # print the options
     for opt, explanation in zip(OPTIONS, EXP_OPTIONS):
         print "%s - %s" %(opt, explanation)

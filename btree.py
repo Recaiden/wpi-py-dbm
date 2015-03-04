@@ -216,9 +216,15 @@ class bpleaf(bpnode):
             self = self.link
             idx = 0
 
-        # Avoid rebalancing
         key = self.keys[idx]
         current = self
+
+        if not ancestors:
+            current.keys.pop(idx)
+            current.vals.pop(idx)
+            return
+        
+        # Avoid rebalancing if possible
         while current is not None and current.keys[0] == key:
             if len(current.keys) > minimum:
                 if current.keys[0] == key:
@@ -370,6 +376,7 @@ class bptree(object):
     def remove(self, key):
         path = self._path_to(key)
         node, idx = path.pop()
+        print "path:", path, "Node:", node, "idx:", idx
         node.remove(idx, path)
     # Define index operations on the tree class [i]
     __getitem__ = get
