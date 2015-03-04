@@ -182,7 +182,7 @@ class bpleaf(bpnode):
         self.keys.insert(idx, key)
         self.vals.insert(idx, value)
 
-        if len(self.keys) > self.tree.fanout:
+        if self.fullness() > self.tree.fanout:
             self.shrink(ancestors)
 
     def lateral(self, parent, idxParent, dst, idxDst):
@@ -194,13 +194,13 @@ class bpleaf(bpnode):
             parent.keys[idxDst] = self.keys[0]
         # Transfer last item to the right sibling node
         else:
-            dst.keys.insert(self.keys.pop())
-            dst.vals.insert(self.vals.pop())
+            dst.keys.insert(0, self.keys.pop())
+            dst.vals.insert(0,  self.vals.pop())
             parent.keys[idxParent] = dst.keys[0]
             
     def split(self):
         '''Divide self in two, creating a sibling to our right'''
-        idxCenter = len(self.keys) / 2 # integer division, round down
+        idxCenter = self.fullness() / 2 # integer division, round down
         median = self.keys[idxCenter - 1]
         
         sibRight = type(self)(self.tree, self.keys[idxCenter:], self.vals[idxCenter:], self.link)
@@ -212,7 +212,7 @@ class bpleaf(bpnode):
     
     def remove(self, idx, ancestors):
         minimum = self.tree.fanout / 2
-        if idx >= len(self.keys):
+        if idx >= self.fullness():
             self = self.link
             idx = 0
 
@@ -275,21 +275,19 @@ class bpleaf(bpnode):
 
         if ancestors:
             parent, idxParent = ancestors.pop()
-            # try to lend to the left neighboring sibling
             if idxParent:
                 sibLeft = parent.children[idxParent - 1]
                 if len(sibLeft.keys) < self.tree.fanout:
                     self.lateral(parent, idxParent, sibLeft, idxParent - 1)
                     return
 
-            # try the right neighbor
             if idxParent + 1 < len(parent.children):
                 sibRight = parent.children[idxParent + 1]
                 if len(sibRight.keys) < self.tree.fanout:
                     self.lateral(parent, idxParent, sibRight, idxParent + 1)
                     return
 
-        center = len(self.keys) / 2
+        center = self.fullness() / 2
         sibling, push = self.split()
         
         if not parent:

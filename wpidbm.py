@@ -3,12 +3,16 @@
 import os       # file operations
 import pickle   # serializing data structures
 import fcntl    # exclusion of simultaneous edits.
+import sys
+import random
+import string
 
 from store import * # part 1
 from btree import * # part 2
 
 db = None
 filenDB="./wpi.db"
+directory="wpi.db.locks"
 
 OPTIONS = ('p', 'g', 'r', 'pf', 'gf', 'q')
 EXP_OPTIONS = ('Put: p key value',
@@ -22,7 +26,7 @@ EXP_OPTIONS = ('Put: p key value',
 def Put(key, data):
     '''stores data under the given key.'''
     # acquire lock and open files
-    marker = open(".%s"%key, 'w+b')
+    marker = open("%s/%s"%(directory, key), 'w+b')
     handle = open(filenDB, 'rb')
     
     global db
@@ -42,7 +46,8 @@ def Put(key, data):
 def Get(key):
     '''retrieves the data.'''
     # acquire lock and open files
-    marker = open(".%s"%key, 'w+b')
+    #marker = open(".%s"%key, 'w+b')
+    marker = open("%s/%s"%(directory, key), 'w+b')
     handle = open(filenDB, 'rb')
     db = pickle.load(handle)
     
@@ -56,7 +61,8 @@ def Get(key):
 def Remove(key):
     '''deletes the key.'''
     # acquire lock and open files
-    marker = open(".%s"%key, 'w+b')
+    #marker = open(".%s"%key, 'w+b')
+    marker = open("%s/%s"%(directory, key), 'w+b')
     handle = open(filenDB, 'rb')
 
     # Update store from file, set new data, rewrite store to file
@@ -72,8 +78,7 @@ def Remove(key):
     marker.close()
     handle.close()
 
-# Running the value store
-if __name__ == "__main__":
+def initDB():
     db = bptree()
     if os.path.exists(filenDB):
         pass # open DB
@@ -83,6 +88,29 @@ if __name__ == "__main__":
         #print pickle.dumps(db)
         pickle.dump(db, f)
         f.close()
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+def randomKeyString():
+    return ''.join(random.choice(string.ascii_uppercase) for i in range(12))
+
+def randomDataString():
+    distance = random.randint(20, 100)
+    return ''.join(random.choice(string.ascii_uppercase) for i in range(distance))
+
+def tests():
+    initDB()
+    latestKey = ""
+    # Add to tree
+    for i in range(1000):
+        key = randomKeyString()
+        Put(key, randomDataString())
+        latestKey = key
+    print latestKey, Get(latestKey)
+    
+def interactive():
+    initDB()
     # print the options
     for opt, explanation in zip(OPTIONS, EXP_OPTIONS):
         print "%s - %s" %(opt, explanation)
@@ -129,3 +157,11 @@ if __name__ == "__main__":
             continue
 
         #TODO for later parts - add to undo history
+
+
+# Running the value store
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        interactive()
+    else:
+        tests()
