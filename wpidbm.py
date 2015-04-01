@@ -90,21 +90,18 @@ def Remove(db, key):
 # Execution cycle
 def openRelation(db):
     # acquire lock and open files
-    #marker = open(".%s"%key, 'w+b')
-    marker = open("%s/%s"%(db.pathdir, key), 'w+b')
     handle = open(db.path, 'rb')
 
     db = pickle.load(handle)
     handle.close()
     handle = open(db.path, 'w+b')
-    return marker, handle
+    return handle, db
 
 def getNext(db, key):
     pass
 
-def closeRelation(db, marker, handle):
+def closeRelation(db, handle):
     pickle.dump(db, handle)
-    marker.close()
     handle.close()
 
 def tplFrom(columns, comparators, values):
@@ -178,11 +175,11 @@ def initDB(name, schema=None):
 
 def csvs():
     # Create and populate city table
-    cities = initDB("city", [])
-
     schemaCity = ["Index", "City name", "Country Code", "State/Region", "Population"]
 
-    if os.path.exists("city.db"):
+    if not os.path.exists("city.db"):
+        cities = initDB("city", [])
+        handle, cities = openRelation(cities)
         with open('city.csv', 'rb') as csvfile:
             cityreader = csv.reader(csvfile, delimiter=',')
             for row in cityreader:
@@ -190,17 +187,18 @@ def csvs():
                 entry = {}
                 for item, attr in zip(row, schemaCity):
                     entry[attr] = item
-                Put(cities, row[0], entry)
+                #Put(cities, row[0], entry)
+                cities.insert(int(row[0]), entry)
+        closeRelation(cities, handle)
 
     # create and populate country table
-    countries = initDB("country", [])
-
     schemaCountry = ["Country Code", "Country Name Alphabetized", "Continent",
                      "Region", "???01", "Date Established", "Population", "???02",
                      "???03", "???04", "Country Name Official", "Government Type",
                      "Government Leader", "???05", "Postal Code"]
     
     if not os.path.exists("country.db"):
+        countries = initDB("country", [])
         with open('country.csv', 'rb') as csvfile:
             countryreader = csv.reader(csvfile, delimiter=',')
             for row in countryreader:
