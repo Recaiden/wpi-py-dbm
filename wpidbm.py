@@ -21,6 +21,7 @@ COMP_GT = "GREATER_THAN"
 COMP_EQ = "EQUAL_TO"
 COMP_LE = "LESS_THAN_OR_EQUAL_TO"
 COMP_GE = "GREATER_THAN_OR_EQUAL_TO"
+COMP_ALL = "NO_CONDITIONS"
 
 OPTIONS = ('p', 'g', 'r', 'pf', 'gf', 'q')
 EXP_OPTIONS = ('Put: p key value',
@@ -98,13 +99,14 @@ def openRelation(db):
     return handle, db
 
 def getNext(db, key):
-    pass
+    val = db.get(key)
+    return val
 
 def closeRelation(db, handle):
     pickle.dump(db, handle)
     handle.close()
 
-def tplFrom(columns, comparators, values):
+def tplFrom(db, columns, comparators, values):
     '''
     Return all tuples in the relation that match a given criterion
 
@@ -114,14 +116,18 @@ def tplFrom(columns, comparators, values):
     column is the key into each record.
     '''
 
-    openRelation()
+    handle, db = openRelation(db)
 
     passed = []
     idx = 0
+    keys = db.keys()
     valid = True
     
     while valid:
-        tpl = getNext(idx)
+        tpl = getNext(db, keys[idx])
+        idx += 1
+        if idx >= len(keys):
+            valid = False
         if not tpl:
             valid = False
             continue
@@ -145,13 +151,14 @@ def tplFrom(columns, comparators, values):
         if include:
             passed.append(tpl)
         
-    closeRelation()
+    closeRelation(db, handle)
     return passed
 
-def select(member, column, comparator, value):
+def select(db, member, column, comparator, value):
     '''Return all the entries in a given colum that match a given criterion'''
-    tpls = tplFrom(column, comparator, value)
+    tpls = tplFrom(db, column, comparator, value)
     vals = []
+    #print tpls
     for tpl in tpls:
         vals.append(tpl[member])
     return vals
@@ -190,6 +197,7 @@ def csvs():
                 #Put(cities, row[0], entry)
                 cities.insert(int(row[0]), entry)
         closeRelation(cities, handle)
+    cities = initDB("city", [])
 
     # create and populate country table
     schemaCountry = ["Country Code", "Country Name Alphabetized", "Continent",
@@ -207,6 +215,31 @@ def csvs():
                 for item, attr in zip(row, schemaCountry):
                     entry[attr] = item
                 Put(countries, row[0], entry)
+    countries = initDB("country", [])
+
+    # Get the population of countries and find 40% of that
+    cntyNames= select(countries, "Country Code", ["Country Code"], [COMP_ALL], [0])
+    popcaps = {}
+    tpls = tplFrom(countries, ["Country Code"], [COMP_ALL], [0])
+    for country in tpls:
+        popcaps[country["Country Code"]] = int(country["Population"]) * 0.4
+
+    # For each country
+    #print cntyNames
+    for country in cntyNames:
+        # Select cities where country code matches
+        #and the population is greater than 40% of the country population
+        qualifiers = select(cities, "City name",
+               ["Country Code", "Population"],
+               [COMP_EQ, COMP_GT],
+               [country, popcaps[country]])
+        print country,
+        if len(qualifiers) == 0:
+            print "None"
+        else:
+            for city in qualifiers:
+                print city,
+            print ""
     
 def interactive():
     initDB()
