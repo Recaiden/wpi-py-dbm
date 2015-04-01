@@ -160,10 +160,7 @@ class bpleaf(bpnode):
     # can't use slots because it would break pickling?
     '''
     '''
-    def __init__(self, tree, keys=None, vals=None, link=None, schema=None, name=None):
-        self.path = name+".db" or "wpi.db"
-        self.pathdir = self.name+".locks"
-        self.schema = schema or []
+    def __init__(self, tree, keys=None, vals=None, link=None):
         self.tree = tree
         # Parallel arrays of keys and value.  For leaves, always modified together
         self.keys = keys or []
@@ -308,7 +305,11 @@ class bpleaf(bpnode):
 # Tree
 #==========================================================================#
 class bptree(object):
-    def __init__(self, fanout=50):
+    def __init__(self, fanout=50, schema=None, name=None):
+        self.path = name+".db" or "wpi.db"
+        self.pathdir = self.path+".locks"
+        self.schema = schema or []
+        
         self.fanout = fanout
         self._root = self._bottom = bpleaf(self)
 

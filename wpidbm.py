@@ -161,7 +161,7 @@ def select(member, column, comparator, value):
 
 #==============================================================================#
 def initDB(name, schema=None):
-    db = bptree(name=Name, schema=schema)
+    db = bptree(schema=schema, name=name)
     if os.path.exists(db.path):
         pass # open DB
     else:
@@ -180,13 +180,35 @@ def csvs():
     # Create and populate city table
     cities = initDB("city", [])
 
+    schemaCity = ["Index", "City name", "Country Code", "State/Region", "Population"]
+
+    if os.path.exists("city.db"):
+        with open('city.csv', 'rb') as csvfile:
+            cityreader = csv.reader(csvfile, delimiter=',')
+            for row in cityreader:
+                print ', '.join(row)
+                entry = {}
+                for item, attr in zip(row, schemaCity):
+                    entry[attr] = item
+                Put(cities, row[0], entry)
+
     # create and populate country table
     countries = initDB("country", [])
 
-    with open('country.csv', 'rb') as csvfile:
-        countryreader = csv.reader(csvfile, delimiter=',')
-        for row in countyreader:
-            print ', '.join(row)
+    schemaCountry = ["Country Code", "Country Name Alphabetized", "Continent",
+                     "Region", "???01", "Date Established", "Population", "???02",
+                     "???03", "???04", "Country Name Official", "Government Type",
+                     "Government Leader", "???05", "Postal Code"]
+    
+    if not os.path.exists("country.db"):
+        with open('country.csv', 'rb') as csvfile:
+            countryreader = csv.reader(csvfile, delimiter=',')
+            for row in countryreader:
+                print ', '.join(row)
+                entry = {}
+                for item, attr in zip(row, schemaCountry):
+                    entry[attr] = item
+                Put(countries, row[0], entry)
     
 def interactive():
     initDB()

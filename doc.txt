@@ -60,28 +60,3 @@ prevented in some other manner the index mechanism would be easily converted.
 For part 3, a schema was added as a parameter and value of the store
 mechanism object.  It was a list of dictionary keys that described the
 columns in order.
-
-
-The country table has a schema of:
-Country Code
-Country Name Alphabetized
-Continent
-Region
-???
-Date Established
-Population
-???
-???
-???
-Country Name Official
-Government Type
-Government Leader
-???
-Postal Code
-
-The city table has a schema of:
-Index
-City name
-Country Code
-State/Region
-Population
