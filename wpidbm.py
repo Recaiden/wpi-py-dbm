@@ -7,6 +7,8 @@ import sys
 import random
 import string
 
+import csv
+
 from store import * # part 1
 from btree import * # part 2
 
@@ -107,9 +109,11 @@ def closeRelation(marker, handle):
     marker.close()
     handle.close()
 
-def tplFrom(column, comparator, value):
+def tplFrom(columns, comparators, values):
     '''
     Return all tuples in the relation that match a given criterion
+
+    Each of the below are parallel lists
     compataror is less than, greater than, or equal
     value is the value being comnpared to
     column is the key into each record.
@@ -126,17 +130,25 @@ def tplFrom(column, comparator, value):
         if not tpl:
             valid = False
             continue
-        if comparator == COMP_LT or comparator == COMP_LE:
-            if int(tpl[column]) < value:
-                passed.append(column)
-        elif comparator == COMP GT or comparator == COMP_GE:
-            if int(tpl[column]) > value:
-                passed.append(column)
-        if comparator == COMP_EQ or comparator == COMP_LE or comparator == COMP_GE:
-            if tpl[column] == value:
-                passed.append(column)
-        #else:
-        #    return ["Error, invalid comparator"]
+        include = True
+        for column, comparator, value in zip(columns, comparators, values):
+            if comparator == COMP_LT:
+                if int(tpl[column]) >= value:
+                    include = False
+            elif comparator == COMP_LE:
+                if int(tpl[column]) > value:
+                    include = False
+            elif comparator == COMP_GE:
+                if int(tpl[column]) < value:
+                    include = False
+            elif comparator == COMP_GT:
+                if int(tpl[column]) <= value:
+                    include = False
+            if comparator == COMP_EQ:
+                if tpl[column] != value:
+                    include = False
+        if include:
+            passed.append(tpl)
         
     closeRelation()
     return passed
@@ -181,6 +193,12 @@ def initDB():
 #         Put(key, randomDataString())
 #         latestKey = key
 #     print latestKey, Get(latestKey)
+
+def csvs():
+    with open('country.csv', 'rb') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
+        for row in spamreader:
+            print ', '.join(row)
     
 def interactive():
     initDB()
@@ -237,4 +255,4 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         interactive()
     else:
-        tests()
+        csvs()
