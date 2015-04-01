@@ -60,3 +60,14 @@ prevented in some other manner the index mechanism would be easily converted.
 For part 3, a schema was added as a parameter and value of the store
 mechanism object.  It was a list of dictionary keys that described the
 columns in order.
+The b+tree store-equivalent class was also modified to keep track of
+its own disk-storage information.
+
+The assumption was made that the country table can fit entirely in
+memory.  This was done because the number of existing countries is
+known, small, and changes only slowly.  There is no prediction that we
+would need to modify the country table in the forseeable future or
+that it might change noticeably in size.
+
+The Open/get-next/close pattern was used to avoid disk access(more
+precisely, disk updates and locking) with every part of a large operation.
