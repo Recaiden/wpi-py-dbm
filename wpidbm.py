@@ -14,6 +14,12 @@ db = None
 filenDB="./wpi.db"
 directory="wpi.db.locks"
 
+COMP_LT = "LESS_THAN"
+COMP_GT = "GREATER_THAN"
+COMP_EQ = "EQUAL_TO"
+COMP_LE = "LESS_THAN_OR_EQUAL_TO"
+COMP_GE = "GREATER_THAN_OR_EQUAL_TO"
+
 OPTIONS = ('p', 'g', 'r', 'pf', 'gf', 'q')
 EXP_OPTIONS = ('Put: p key value',
                'Get: g key',
@@ -78,6 +84,73 @@ def Remove(key):
     marker.close()
     handle.close()
 
+    return present
+
+#==============================================================================#
+# Execution cycle
+def openRelation():
+    # acquire lock and open files
+    #marker = open(".%s"%key, 'w+b')
+    marker = open("%s/%s"%(directory, key), 'w+b')
+    handle = open(filenDB, 'rb')
+
+    db = pickle.load(handle)
+    handle.close()
+    handle = open(filenDB, 'w+b')
+    return marker, handle
+
+def getNext(key):
+    pass
+
+def closeRelation(marker, handle):
+    pickle.dump(db, handle)
+    marker.close()
+    handle.close()
+
+def tplFrom(column, comparator, value):
+    '''
+    Return all tuples in the relation that match a given criterion
+    compataror is less than, greater than, or equal
+    value is the value being comnpared to
+    column is the key into each record.
+    '''
+
+    openRelation()
+
+    passed = []
+    idx = 0
+    valid = True
+    
+    while valid:
+        tpl = getNext(idx)
+        if not tpl:
+            valid = False
+            continue
+        if comparator == COMP_LT or comparator == COMP_LE:
+            if int(tpl[column]) < value:
+                passed.append(column)
+        elif comparator == COMP GT or comparator == COMP_GE:
+            if int(tpl[column]) > value:
+                passed.append(column)
+        if comparator == COMP_EQ or comparator == COMP_LE or comparator == COMP_GE:
+            if tpl[column] == value:
+                passed.append(column)
+        #else:
+        #    return ["Error, invalid comparator"]
+        
+    closeRelation()
+    return passed
+
+def select(member, column, comparator, value):
+    '''Return all the entries in a given colum that match a given criterion'''
+    tpls = tplFrom(column, comparator, value)
+    vals = []
+    for tpl in tpls:
+        vals.append(tpl[member])
+    return vals
+
+#==============================================================================#
+
 def initDB():
     db = bptree()
     if os.path.exists(filenDB):
@@ -92,22 +165,22 @@ def initDB():
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def randomKeyString():
-    return ''.join(random.choice(string.ascii_uppercase) for i in range(12))
+# def randomKeyString():
+#     return ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
-def randomDataString():
-    distance = random.randint(20, 100)
-    return ''.join(random.choice(string.ascii_uppercase) for i in range(distance))
+# def randomDataString():
+#     distance = random.randint(20, 100)
+#     return ''.join(random.choice(string.ascii_uppercase) for i in range(distance))
 
-def tests():
-    initDB()
-    latestKey = ""
-    # Add to tree
-    for i in range(1000):
-        key = randomKeyString()
-        Put(key, randomDataString())
-        latestKey = key
-    print latestKey, Get(latestKey)
+# def tests():
+#     initDB()
+#     latestKey = ""
+#     # Add to tree
+#     for i in range(1000):
+#         key = randomKeyString()
+#         Put(key, randomDataString())
+#         latestKey = key
+#     print latestKey, Get(latestKey)
     
 def interactive():
     initDB()
