@@ -12,9 +12,9 @@ import csv
 from store import * # part 1
 from btree import * # part 2
 
-db = None
-filenDB="./wpi.db"
-directory="wpi.db.locks"
+#db = None
+#filenDB="./wpi.db"
+#directory="wpi.db.locks"
 
 COMP_LT = "LESS_THAN"
 COMP_GT = "GREATER_THAN"
@@ -31,16 +31,15 @@ EXP_OPTIONS = ('Put: p key value',
                'Quit')
 
 # These 3 operations hold the file-access/refreshing and attach to the actual data-store.
-def Put(key, data):
+def Put(db, key, data):
     '''stores data under the given key.'''
     # acquire lock and open files
-    marker = open("%s/%s"%(directory, key), 'w+b')
-    handle = open(filenDB, 'rb')
+    marker = open("%s/%s"%(db.pathdir, key), 'w+b')
+    handle = open(db.path, 'rb')
     
-    global db
     db = pickle.load(handle)
     handle.close()
-    handle = open(filenDB, 'w+b')
+    handle = open(db.path, 'w+b')
     
     val = db.insert(key, data)
     pickle.dump(db, handle)
@@ -51,12 +50,12 @@ def Put(key, data):
     
     return val
 
-def Get(key):
+def Get(db, key):
     '''retrieves the data.'''
     # acquire lock and open files
     #marker = open(".%s"%key, 'w+b')
-    marker = open("%s/%s"%(directory, key), 'w+b')
-    handle = open(filenDB, 'rb')
+    marker = open("%s/%s"%(db.pathdir, key), 'w+b')
+    handle = open(db.path, 'rb')
     db = pickle.load(handle)
     
     val =  db.get(key)
@@ -66,18 +65,17 @@ def Get(key):
 
     return val
 
-def Remove(key):
+def Remove(db, key):
     '''deletes the key.'''
     # acquire lock and open files
     #marker = open(".%s"%key, 'w+b')
-    marker = open("%s/%s"%(directory, key), 'w+b')
-    handle = open(filenDB, 'rb')
+    marker = open("%s/%s"%(db.pathdir, key), 'w+b')
+    handle = open(db.path, 'rb')
 
     # Update store from file, set new data, rewrite store to file
-    global db
     db = pickle.load(handle)
     handle.close()
-    handle = open(filenDB, 'w+b')
+    handle = open(db.path, 'w+b')
     
     present = db.remove(key)
     pickle.dump(db, handle)
@@ -90,21 +88,21 @@ def Remove(key):
 
 #==============================================================================#
 # Execution cycle
-def openRelation():
+def openRelation(db):
     # acquire lock and open files
     #marker = open(".%s"%key, 'w+b')
-    marker = open("%s/%s"%(directory, key), 'w+b')
-    handle = open(filenDB, 'rb')
+    marker = open("%s/%s"%(db.pathdir, key), 'w+b')
+    handle = open(db.path, 'rb')
 
     db = pickle.load(handle)
     handle.close()
-    handle = open(filenDB, 'w+b')
+    handle = open(db.path, 'w+b')
     return marker, handle
 
-def getNext(key):
+def getNext(db, key):
     pass
 
-def closeRelation(marker, handle):
+def closeRelation(db, marker, handle):
     pickle.dump(db, handle)
     marker.close()
     handle.close()
@@ -162,42 +160,32 @@ def select(member, column, comparator, value):
     return vals
 
 #==============================================================================#
-
-def initDB():
-    db = bptree()
-    if os.path.exists(filenDB):
+def initDB(name, schema=None):
+    db = bptree(name=Name, schema=schema)
+    if os.path.exists(db.path):
         pass # open DB
     else:
         print "creating default file"
-        f = open(filenDB, "w+b")
+        f = open(db.path, "w+b")
         #print pickle.dumps(db)
         pickle.dump(db, f)
         f.close()
 
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    if not os.path.exists(db.pathdir):
+        os.makedirs(db.pathdir)
 
-# def randomKeyString():
-#     return ''.join(random.choice(string.ascii_uppercase) for i in range(12))
-
-# def randomDataString():
-#     distance = random.randint(20, 100)
-#     return ''.join(random.choice(string.ascii_uppercase) for i in range(distance))
-
-# def tests():
-#     initDB()
-#     latestKey = ""
-#     # Add to tree
-#     for i in range(1000):
-#         key = randomKeyString()
-#         Put(key, randomDataString())
-#         latestKey = key
-#     print latestKey, Get(latestKey)
+    return db
 
 def csvs():
+    # Create and populate city table
+    cities = initDB("city", [])
+
+    # create and populate country table
+    countries = initDB("country", [])
+
     with open('country.csv', 'rb') as csvfile:
-        spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
-        for row in spamreader:
+        countryreader = csv.reader(csvfile, delimiter=',')
+        for row in countyreader:
             print ', '.join(row)
     
 def interactive():
