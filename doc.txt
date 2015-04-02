@@ -71,3 +71,19 @@ that it might change noticeably in size.
 
 The Open/get-next/close pattern was used to avoid disk access(more
 precisely, disk updates and locking) with every part of a large operation.
+
+To review, the program uses 4 major classes.  The b+tree class
+provides indexing, file-system information, and interfaces between the
+data in the relation and the main class.  Each instance of ths class
+describes one relation.
+The next two classes represent leaf nodes and interior nodes in the
+tree.
+The fourth 'class' is the main program, which creates the tables and
+performs the test operations on them.  It contains the
+open/get-next/close methods and get/remove methods that operate on a
+passed in instance of a b+tree.
+
+To test it, the csv module was used to read in data from the provided
+relations.  Two queries were made to the relations, and the matching
+cities printed.  These were checked manually with the country table's
+total population and the entries for those cities.
