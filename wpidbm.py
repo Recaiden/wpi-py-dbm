@@ -31,6 +31,26 @@ EXP_OPTIONS = ('Put: p key value',
                'Get to file: gf key file',
                'Quit')
 
+# Logging
+def TWrite(db, string):
+    handleLog = open(db.pathlog, 'wb')
+    handleLog.write(string)
+    handleLog.close()
+
+def TBegin(db):
+    '''write the commit message'''
+    db.transaction += 1
+    TWrite("START %s" %db.transaction)
+
+def TRecord(db, key, old, new):
+    '''Old is null if a new record
+    new is null if deleted'''
+    TWrite(db, log(db.transaction, key, old, new))
+
+def TCommit(db):
+    TWrite("COMMIT %s" %db.transaction)
+
+
 # These 3 operations hold the file-access/refreshing and attach to the actual data-store.
 def Put(db, key, data):
     '''stores data under the given key.'''
