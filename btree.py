@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from dbmglobals import *
+
 import bisect
 import itertools
 import operator
@@ -359,6 +361,28 @@ class bptree(object):
             idx = bisect.bisect_left(node.keys, item)
             path.append((node, idx))
         return path
+
+    #==========================================================================#
+    # Logging methods
+    #==========================================================================#
+    def TWrite(self, string):
+        handleLog = open(self.pathlog, 'wb')
+        handleLog.write(string)
+        handleLog.close()
+
+    def TBegin(self):
+        '''write the commit message'''
+        self.transaction += 1
+        TWrite("START %s" %self.transaction)
+
+    def TRecord(self, key, old, new):
+        '''Old is null if a new record
+        new is null if deleted'''
+        TWrite(self, log(self.transaction, key, old, new))
+
+    def TCommit(self):
+        TWrite("COMMIT %s" %self.transaction)
+
 
     #==========================================================================#
     # Indexing methods
