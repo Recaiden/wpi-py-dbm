@@ -92,8 +92,8 @@ def replay(table, basename="clone"):
             db.insert(line.split("|")[1], line.split("|")[3])
 
 def display():
-    cities = initDB("city", [])
-    countries = initDB("country", [])
+    cities = initDB("clonecity", [])
+    countries = initDB("clonecountry", [])
     
     handle, countries = openRelation(countries)
     tpls = tplFrom(countries, ["Country Code"], [COMP_ALL], [0])
