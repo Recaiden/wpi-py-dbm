@@ -308,7 +308,10 @@ class bptree(object):
     def __init__(self, fanout=50, schema=None, name=None):
         self.path = name+".db" or "wpi.db"
         self.pathdir = self.path+".locks"
+        self.pathlog = self.path+".log"
         self.schema = schema or []
+
+        self.transaction = 0
         
         self.fanout = fanout
         self._root = self._bottom = bpleaf(self)

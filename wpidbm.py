@@ -214,7 +214,7 @@ def csvs():
                 entry = {}
                 for item, attr in zip(row, schemaCity):
                     entry[attr] = item
-                #Put(cities, row[0], entry)
+                TRecord(cities, row[0], "NULL", entry)
                 cities.insert(int(row[0]), entry)
         closeRelation(cities, handle)
     cities = initDB("city", [])
@@ -227,6 +227,7 @@ def csvs():
     
     if not os.path.exists("country.db"):
         countries = initDB("country", [])
+        handle, countries = openRelation(countries)
         with open('country.csv', 'rb') as csvfile:
             countryreader = csv.reader(csvfile, delimiter=',')
             for row in countryreader:
@@ -234,7 +235,8 @@ def csvs():
                 entry = {}
                 for item, attr in zip(row, schemaCountry):
                     entry[attr] = item
-                Put(countries, row[0], entry)
+                TRecord(coutries, row[0], "NULL", entry)
+                countries.insert(int(row[0]), entry)
     countries = initDB("country", [])
 
     # Get the population of countries and find 40% of that
