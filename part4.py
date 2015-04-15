@@ -27,6 +27,10 @@ def clone(current, new):
     pickle.dump(db, handle)
     handle.close()
 
+def transferLogs():
+    #TODO
+    pass
+
 def drift(years):
     for i in range(years):
         #TODO change population by 2% for each entry.
@@ -34,9 +38,33 @@ def drift(years):
         pass
     pass
 
-def replay(basename="clone"):
-    #TODO
-    pass
+def replay(table, basename="clone"):
+    db = initDB("%s%s"%(basename, table), [])
+    log = open(db.pathlog, 'rb')
+    handle = None
+    for line in log:
+        # Start
+        if line.split("|")[1] == "START":
+            handle, db = openRelation(db)
+            
+        # Commit
+        elif line.split("|")[1] == "COMMIT":
+            closeRelation(db, handle)
+            
+        # Insertion
+        elif line.split("|")[2] == "NULL":
+            db.insert(line.split("|")[1], line.split("|")[3])
+        
+        # Deletion
+        elif line.split("|")[3] == "NULL":
+            # Possibly check for existence?
+            db.remove(line.split("|")[1])
+        
+        # Update
+        else:
+            # Possibly check matching of previous value?
+            db.remove(line.split("|")[1])
+            db.insert(line.split("|")[1], line.split("|")[3])
 
 def display():
     #TODO
@@ -71,13 +99,15 @@ def part4(years=1):
     clone("country", "clonecountry")
     clone("city", "clonecity")
     drift(years)
-    replay()
+    replay("city")
+    replay("country")
 
     display()
     
 # Running the value store
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        replay()
-        
-    part4()
+        replay("city")
+        replay("country")
+    else:
+        part4()

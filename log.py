@@ -10,7 +10,7 @@ class log(object):
         self.transaction = transaction
 
     def printable(self):
-        return "%s\n%s\n%s\n%s" %(self.transaction, self.key, self.old, self.new)
+        return "%s|%s|%s|%s" %(self.transaction, self.key, self.old, self.new)
 
 def log(transaction, key, old, new):
     return log(transaction, key, old, new)

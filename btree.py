@@ -373,7 +373,7 @@ class bptree(object):
     def TBegin(self):
         '''write the commit message'''
         self.transaction += 1
-        TWrite("START %s" %self.transaction)
+        TWrite("%s|START" %self.transaction)
 
     def TRecord(self, key, old, new):
         '''Old is null if a new record
@@ -381,7 +381,7 @@ class bptree(object):
         TWrite(self, log(self.transaction, key, old, new))
 
     def TCommit(self):
-        TWrite("COMMIT %s" %self.transaction)
+        TWrite("%s|COMMIT" %self.transaction)
 
 
     #==========================================================================#
