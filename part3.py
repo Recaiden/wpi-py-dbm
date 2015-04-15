@@ -45,6 +45,10 @@ def csvs():
                 countries.insert(int(row[0]), entry)
     countries = initDB("country", [])
 
+    return cities, countries
+
+
+def queryPopulation():
     # Get the population of countries and find 40% of that
     cntyNames= select(countries, "Country Code", ["Country Code"], [COMP_ALL], [0])
     popcaps = {}
@@ -69,6 +73,10 @@ def csvs():
                 print city,
             print ""
 
+def part3():
+    cities, countries = csvs()
+    queryPopulation(cities, countries)
+
 # Running the value store
 if __name__ == "__main__":
-    csvs()
+    part3()
