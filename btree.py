@@ -366,7 +366,7 @@ class bptree(object):
     # Logging methods
     #==========================================================================#
     def TWrite(self, string):
-        handleLog = open(self.pathlog, 'wb')
+        handleLog = open(self.pathlog, 'a+b')
         handleLog.write(string)
         handleLog.close()
 
