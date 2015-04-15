@@ -27,16 +27,41 @@ def clone(current, new):
     pickle.dump(db, handle)
     handle.close()
 
-def transferLogs():
-    #TODO
-    pass
+def transferLogs(current, new):
+    shutil.copy2("%s.db.log", "%s.db.log" %(current, new))
 
 def drift(years):
+    cities = initDB("city", [])
+    countries = initDB("country", [])
+    
     for i in range(years):
-        #TODO change population by 2% for each entry.
         # each year on each table will be a transaction
-        pass
-    pass
+        countries.TBegin()
+        handle, countries = openRelation(countries)
+        # Get all countries
+        tpls = tplFrom(countries, ["Country Code"], [COMP_ALL], [0])
+        for country in tpls:
+            popNew = int(int(country["Population"]) * 1.02)
+            ctryNew = country
+            ctryNew["Population"] = popNew
+            countries.TRecord(country["Country Code"], country, ctryNew)
+            countries.remove(country["Country Code"])
+            countries.insert(country["Country Code"], ctryNew)
+        countries.TCommit()
+        closeRelation(countries)
+
+        cities.TBegin()
+        handle, cities = openRelation(cities)
+        tpls = tplFrom(cities, ["Index"], [COMP_ALL], [0])
+        for city in tpls:
+            popNew = int(int(city["Population"]) * 1.02)
+            ctryNew = city
+            ctryNew["Population"] = popNew
+            cities.TRecord(city["Index"], city, ctryNew)
+            cities.remove(city["Index"])
+            cities.insert(city["Index"], cctryNew)
+        cities.TCommit()
+        closeRelation(cities)
 
 def replay(table, basename="clone"):
     db = initDB("%s%s"%(basename, table), [])
@@ -67,33 +92,21 @@ def replay(table, basename="clone"):
             db.insert(line.split("|")[1], line.split("|")[3])
 
 def display():
-    #TODO
-    pass
+    cities = initDB("city", [])
+    countries = initDB("country", [])
+    
+    handle, countries = openRelation(countries)
+    tpls = tplFrom(countries, ["Country Code"], [COMP_ALL], [0])
+    for country in tpls:
+        print country["Country Name Official"], country["Population"]
+    closeRelation(countries)
 
-# def queryPopulation():
-#     # Get the population of countries and find 40% of that
-#     cntyNames= select(countries, "Country Code", ["Country Code"], [COMP_ALL], [0])
-#     popcaps = {}
-#     tpls = tplFrom(countries, ["Country Code"], [COMP_ALL], [0])
-#     for country in tpls:
-#         popcaps[country["Country Code"]] = int(country["Population"]) * 0.4
+    handle, cities = openRelation(cities)
+    tpls = tplFrom(cities, ["Country Code"], [COMP_ALL], [0])
+    for city in tpls:
+        print city["City name"], city["Population"]
+    closeRelation(cities)
 
-#     # For each country
-#     #print cntyNames
-#     for country in cntyNames:
-#         # Select cities where country code matches
-#         #and the population is greater than 40% of the country population
-#         qualifiers = select(cities, "City name",
-#                ["Country Code", "Population"],
-#                [COMP_EQ, COMP_GT],
-#                [country, popcaps[country]])
-#         print country,
-#         if len(qualifiers) == 0:
-#             print "None"
-#         else:
-#             for city in qualifiers:
-#                 print city,
-#             print ""
 
 def part4(years=1):
     clone("country", "clonecountry")
