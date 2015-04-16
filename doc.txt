@@ -87,3 +87,15 @@ To test it, the csv module was used to read in data from the provided
 relations.  Two queries were made to the relations, and the matching
 cities printed.  These were checked manually with the country table's
 total population and the entries for those cities.
+
+
+For Part 4, logging was added to the btree class, storing lgos simply
+as text 4-tuples separated by pipe characters.  First, a transaction
+number that was maintained per-relation.  Second, the key.  Third, the
+old value.  Fourth, the new value.
+
+Running wpidbm as usual will execute code from part4.py, which re-uses
+the csv read-in from part 3, and then creates copy relations
+'clonecity' and 'clonecountry'.  It then adjusts all the population values in the
+original up by 2%, copies the logs, and replays.
+Outstanding problem: Updates in replayed logs generates duplicate values.
