@@ -6,6 +6,8 @@ import bisect
 import itertools
 import operator
 
+import log
+
 #==========================================================================#
 # Nodes
 #==========================================================================#
@@ -227,7 +229,9 @@ class bpleaf(bpnode):
             return
         
         # Avoid rebalancing if possible
-        while current is not None and current.keys[0] == key:
+        while current is not None:
+            if key not in current.keys:
+                continue
             if len(current.keys) > minimum:
                 if current.keys[0] == key:
                     idx = 0
@@ -373,15 +377,15 @@ class bptree(object):
     def TBegin(self):
         '''write the commit message'''
         self.transaction += 1
-        TWrite("%s|START" %self.transaction)
+        self.TWrite("%s|START\n" %self.transaction)
 
     def TRecord(self, key, old, new):
         '''Old is null if a new record
         new is null if deleted'''
-        TWrite(self, log(self.transaction, key, old, new))
+        self.TWrite(log.log(self.transaction, key, old, new).printable())
 
     def TCommit(self):
-        TWrite("%s|COMMIT" %self.transaction)
+        self.TWrite("%s|COMMIT\n" %self.transaction)
 
 
     #==========================================================================#
@@ -405,7 +409,7 @@ class bptree(object):
     def remove(self, key):
         path = self._path_to(key)
         node, idx = path.pop()
-        print "path:", path, "Node:", node, "idx:", idx
+        #print "path:", path, "Node:", node, "idx:", idx
         node.remove(idx, path)
     # Define index operations on the tree class [i]
     __getitem__ = get

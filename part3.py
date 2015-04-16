@@ -9,21 +9,21 @@ import csv
 def csvs():
     # Create and populate city table
     schemaCity = ["Index", "City name", "Country Code", "State/Region", "Population"]
-
     if not os.path.exists("city.db"):
         cities = initDB("city", [])
         handle, cities = openRelation(cities)
+        cities.TBegin()
         with open('city.csv', 'rb') as csvfile:
             cityreader = csv.reader(csvfile, delimiter=',')
             for row in cityreader:
-                print ', '.join(row)
+                #print ', '.join(row)
                 entry = {}
                 for item, attr in zip(row, schemaCity):
                     entry[attr] = item
-                #cities.TRecord(, row[0], "NULL", entry)
+                cities.TRecord(int(row[0]), "NULL", entry)
                 cities.insert(int(row[0]), entry)
+        cities.TCommit()
         closeRelation(cities, handle)
-    cities = initDB("city", [])
 
     # create and populate country table
     schemaCountry = ["Country Code", "Country Name Alphabetized", "Continent",
@@ -34,22 +34,24 @@ def csvs():
     if not os.path.exists("country.db"):
         countries = initDB("country", [])
         handle, countries = openRelation(countries)
+        countries.TBegin()
         with open('country.csv', 'rb') as csvfile:
             countryreader = csv.reader(csvfile, delimiter=',')
             for row in countryreader:
-                print ', '.join(row)
+                #print ', '.join(row)
                 entry = {}
                 for item, attr in zip(row, schemaCountry):
                     entry[attr] = item
-                #countries.TRecord(row[0], "NULL", entry)
-                countries.insert(int(row[0]), entry)
-    countries = initDB("country", [])
-
-    return cities, countries
-
+                countries.TRecord(row[0], "NULL", entry)
+                countries.insert(row[0], entry)
+        countries.TCommit()
+        closeRelation(countries, handle)
 
 def queryPopulation():
     # Get the population of countries and find 40% of that
+    cities = initDB("city", [])
+    countries = initDB("country", [])
+    
     cntyNames= select(countries, "Country Code", ["Country Code"], [COMP_ALL], [0])
     popcaps = {}
     tpls = tplFrom(countries, ["Country Code"], [COMP_ALL], [0])
@@ -75,7 +77,7 @@ def queryPopulation():
 
 def part3():
     cities, countries = csvs()
-    queryPopulation(cities, countries)
+    queryPopulation()
 
 # Running the value store
 if __name__ == "__main__":

@@ -164,9 +164,7 @@ def select(db, member, column, comparator, value):
 def initDB(name, schema=None):
     db = bptree(schema=schema, name=name)
     if os.path.exists(db.path):
-         marker = open("%s/%s"%(db.pathdir, key), 'w+b')
          handle = open(db.path, 'rb')
-    
          db = pickle.load(handle)
          handle.close()
     else:
@@ -178,6 +176,9 @@ def initDB(name, schema=None):
 
     if not os.path.exists(db.pathdir):
         os.makedirs(db.pathdir)
+
+    if not os.path.exists(db.pathlog):
+        open(db.pathlog, 'a').close()
 
     return db
 
