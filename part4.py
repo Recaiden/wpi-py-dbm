@@ -67,12 +67,12 @@ def drift(years):
             cities.TRecord(city["Index"], city, ctyNew)
             #cities.remove(int(city["Index"]))
             cities.insert(int(city["Index"]), ctyNew)
-        cities.TCommit()
+        cities.TCommit() 
         
 def replay(table, basename="clone"):
     db = initDB("%s%s"%(basename, table), [])
     log = open(db.pathlog, 'rb')
-    handle = None
+
     for line in log:
         # Start
         if line.strip("\r\n").split("|")[1] == "START":
@@ -86,46 +86,54 @@ def replay(table, basename="clone"):
             
         # Insertion
         elif line.strip("\r\n").split("|")[2] == "NULL":
-            db.insert(line.split("|")[1], line.split("|")[3])
+            key = line.strip("\r\n").split("|")[1]
+            valNew = eval(line.strip("\r\n").split("|")[3])
+            if db.get(key) != valNew:
+                db[key] = valNew
         
         # Deletion
         elif line.strip("\r\n").split("|")[3] == "NULL":
             # Possibly check for existence?
             #db.remove(line.split("|")[1])
-            db.insert(line.split("|")[1], line.split("|")[3])
+            db.insert(line.strip("\r\n").split("|")[1],
+                      eval(line.strip("\r\n").split("|")[3]))
         
         # Update
         else:
             # Possibly check matching of previous value?
-            #db.remove(line.split("|")[1])
-            db.insert(line.split("|")[1], line.split("|")[3])
+            key = line.strip("\r\n").split("|")[1]
+            valNew = eval(line.strip("\r\n").split("|")[3])
+            if db.get(key) != valNew:
+                db[key] = valNew
+            
+    handle = open(db.path, 'w+b')
+    pickle.dump(db, handle)
+    handle.close()
 
 def display():
     cities = initDB("clonecity", [])
     countries = initDB("clonecountry", [])
     
-    #handle, countries = openRelation(countries)
     tpls = tplFrom(countries, ["Country Code"], [COMP_ALL], [0])
     for country in tpls:
         print country["Country Name Official"], country["Population"]
-    #closeRelation(countries)
-
     
-    #tpls = tplFrom(cities, ["Country Code"], [COMP_ALL], [0])
-    #for city in tpls:
-    #    print city["City name"], city["Population"]
+     tpls = tplFrom(cities, ["Country Code"], [COMP_ALL], [0])
+     for city in tpls:
+         print city["City name"], city["Population"]
     
 
 def part4(years=1):
+    sys.setrecursionlimit(10000)
     clone("country", "clonecountry")
     clone("city", "clonecity")
     drift(years)
     transferLogs("country", "clonecountry")
     transferLogs("city", "clonecity")
-    #replay("city")
-    #replay("country")
+    replay("city")
+    replay("country")
 
-    #display()
+    display()
     
 # Running the value store
 if __name__ == "__main__":
